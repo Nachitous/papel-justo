@@ -263,8 +263,7 @@ private fun SelectorPlyType(seleccionado: PlyType, onSeleccion: (PlyType) -> Uni
             onDismissRequest = { expandido = false }
         )
         {
-            PlyType.entries.forEach
-            { tipo ->
+            PlyType.entries.forEach { tipo ->
                 DropdownMenuItem(
                     text = { Text(tipo.label, style = MaterialTheme.typography.bodyLarge) },
                     onClick = {

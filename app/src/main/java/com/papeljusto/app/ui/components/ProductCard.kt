@@ -107,7 +107,7 @@ fun ProductCard(
                 modifier = Modifier.fillMaxWidth()
             )
             {
-                Column
+                Column()
                 {
                     Text(
                         text = "$ %.0f".format(product.precio),

@@ -29,7 +29,7 @@ class ProductRepository(private val context: Context)
             val current = currentList(prefs)
             val nextId = (current.maxOfOrNull { it.id } ?: 0L) + 1
             val updated = current + product.copy(id = nextId)
-            prefs[PRODUCTS_KEY] = json.encodeToString(updated)
+            prefs[PRODUCTS_KEY] = json.encodeToString<List<Product>>(updated)
         }
     }
 
@@ -37,7 +37,7 @@ class ProductRepository(private val context: Context)
     {
         context.dataStore.edit { prefs ->
             val updated = currentList(prefs).filter { it.id != product.id }
-            prefs[PRODUCTS_KEY] = json.encodeToString(updated)
+            prefs[PRODUCTS_KEY] = json.encodeToString<List<Product>>(updated)
         }
     }
 
