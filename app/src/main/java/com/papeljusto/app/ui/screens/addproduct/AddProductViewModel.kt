@@ -7,6 +7,8 @@ import com.papeljusto.app.data.repository.ProductRepository
 import com.papeljusto.app.domain.calculator.PaperCalculator
 import com.papeljusto.app.domain.model.PlyType
 import com.papeljusto.app.domain.model.Product
+import com.papeljusto.app.domain.model.ScannedProductData
+import com.papeljusto.app.domain.usecase.ScanProductUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +29,10 @@ data class AddProductUiState(
     val error: String? = null
 )
 
-class AddProductViewModel(private val repository: ProductRepository) : ViewModel()
+class AddProductViewModel(
+    private val repository: ProductRepository,
+    val scanUseCase: ScanProductUseCase
+) : ViewModel()
 {
     private val _uiState = MutableStateFlow(AddProductUiState())
     val uiState: StateFlow<AddProductUiState> = _uiState.asStateFlow()
@@ -41,6 +46,23 @@ class AddProductViewModel(private val repository: ProductRepository) : ViewModel
     fun onLargoCmChange(value: String) = _uiState.update { it.copy(largoCm = value) }
     fun onPlyTypeChange(value: PlyType) = _uiState.update { it.copy(plyType = value) }
     fun toggleModoAvanzado() = _uiState.update { it.copy(modoAvanzado = !it.modoAvanzado) }
+
+    fun cargarDesdeEscaneo(data: ScannedProductData)
+    {
+        _uiState.update { state ->
+            state.copy(
+                marca = data.marca ?: state.marca,
+                precio = data.precio?.let { "%.0f".format(it) } ?: state.precio,
+                cantidadRollos = data.cantidadRollos?.toString() ?: state.cantidadRollos,
+                metrosPorRollo = data.metrosPorRollo?.toString() ?: state.metrosPorRollo,
+                cantidadHojas = data.cantidadHojas?.toString() ?: state.cantidadHojas,
+                anchoCm = data.anchoCm?.toString() ?: state.anchoCm,
+                largoCm = data.largoCm?.toString() ?: state.largoCm,
+                plyType = data.plyType ?: state.plyType,
+                modoAvanzado = state.modoAvanzado || data.cantidadHojas != null || data.anchoCm != null
+            )
+        }
+    }
 
     fun guardar()
     {
@@ -90,10 +112,13 @@ class AddProductViewModel(private val repository: ProductRepository) : ViewModel
         }
     }
 
-    class Factory(private val repository: ProductRepository) : ViewModelProvider.Factory
+    class Factory(
+        private val repository: ProductRepository,
+        private val scanUseCase: ScanProductUseCase
+    ) : ViewModelProvider.Factory
     {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            AddProductViewModel(repository) as T
+            AddProductViewModel(repository, scanUseCase) as T
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +28,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -47,6 +49,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.papeljusto.app.domain.model.PlyType
+import com.papeljusto.app.ui.scanner.ScannerOverlay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +60,7 @@ fun AddProductScreen(
 )
 {
     val state by viewModel.uiState.collectAsState()
+    var mostrarScanner by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.guardado)
     {
@@ -93,6 +97,18 @@ fun AddProductScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         )
         {
+            OutlinedButton(
+                onClick = { mostrarScanner = true },
+                modifier = Modifier.fillMaxWidth()
+            )
+            {
+                Text(
+                    text = "Escanear empaque",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
             SeccionBasica(state = state, viewModel = viewModel)
 
             TextButton(
@@ -145,6 +161,18 @@ fun AddProductScreen(
                 )
             }
         }
+    }
+
+    if (mostrarScanner)
+    {
+        ScannerOverlay(
+            scanUseCase = viewModel.scanUseCase,
+            onResult = { data ->
+                viewModel.cargarDesdeEscaneo(data)
+                mostrarScanner = false
+            },
+            onDismiss = { mostrarScanner = false }
+        )
     }
 }
 

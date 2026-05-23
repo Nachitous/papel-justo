@@ -19,7 +19,7 @@ fun AppNavigation(container: AppContainer)
     val navController = rememberNavController()
 
     val homeFactory = HomeViewModel.Factory(container.repository, container.compareProductsUseCase)
-    val addFactory = AddProductViewModel.Factory(container.repository)
+    val addFactory = AddProductViewModel.Factory(container.repository, container.scanProductUseCase)
 
     NavHost(navController = navController, startDestination = RUTA_HOME)
     {
