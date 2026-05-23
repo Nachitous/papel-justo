@@ -5,14 +5,14 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.papeljusto.app.domain.model.PlyType
 import com.papeljusto.app.domain.model.ScannedProductData
 import com.papeljusto.app.domain.model.ScanOrigen
 import com.papeljusto.app.domain.scanner.ScannerDataSource
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 class OcrProductScanner : ScannerDataSource
 {
@@ -29,49 +29,61 @@ class OcrProductScanner : ScannerDataSource
         return tryOcr(image)
     }
 
-    private suspend fun tryBarcode(image: InputImage): ScannedProductData?
-    {
-        val barcodes = barcodeScanner.process(image).await()
-        val barcode = barcodes.firstOrNull { it.valueType == Barcode.TYPE_PRODUCT } ?: return null
-        val rawValue = barcode.rawValue ?: return null
-        return ScannedProductData(marca = rawValue, origen = ScanOrigen.BARCODE)
-    }
+    private suspend fun tryBarcode(image: InputImage): ScannedProductData? =
+        suspendCancellableCoroutine { cont ->
+            barcodeScanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    val barcode = barcodes.firstOrNull { b -> b.valueType == Barcode.TYPE_PRODUCT }
+                    val rawValue = barcode?.rawValue
+                    cont.resume(
+                        if (rawValue != null) ScannedProductData(marca = rawValue, origen = ScanOrigen.BARCODE)
+                        else null
+                    )
+                }
+                .addOnFailureListener { cont.resume(null) }
+        }
 
-    private suspend fun tryOcr(image: InputImage): ScannedProductData?
-    {
-        val result = textRecognizer.process(image).await()
-        val text = result.text.lowercase()
-        if (text.isBlank()) return null
+    private suspend fun tryOcr(image: InputImage): ScannedProductData? =
+        suspendCancellableCoroutine { cont ->
+            textRecognizer.process(image)
+                .addOnSuccessListener { visionText ->
+                    val text = visionText.text.lowercase()
+                    cont.resume(
+                        if (text.isBlank()) null
+                        else ScannedProductData(
+                            marca = extractMarca(visionText),
+                            precio = extractPrecio(text),
+                            cantidadRollos = extractRollos(text),
+                            metrosPorRollo = extractMetros(text),
+                            cantidadHojas = extractHojas(text),
+                            plyType = extractPlyType(text),
+                            origen = ScanOrigen.OCR
+                        )
+                    )
+                }
+                .addOnFailureListener { cont.resume(null) }
+        }
 
-        return ScannedProductData(
-            marca = extractMarca(result.text),
-            precio = extractPrecio(text),
-            cantidadRollos = extractRollos(text),
-            metrosPorRollo = extractMetros(text),
-            cantidadHojas = extractHojas(text),
-            plyType = extractPlyType(text),
-            origen = ScanOrigen.OCR
-        )
-    }
-
-    private fun extractMarca(raw: String): String?
+    private fun extractMarca(visionText: Text): String?
     {
-        val firstLine = raw.lines().firstOrNull { it.trim().length >= 3 } ?: return null
-        return firstLine.trim().take(40)
+        val firstLine = visionText.textBlocks
+            .flatMap { it.lines }
+            .firstOrNull { it.text.trim().length >= 3 }
+        return firstLine?.text?.trim()?.take(40)
     }
 
     private fun extractPrecio(text: String): Double?
     {
         val patterns = listOf(
             Regex("""\$\s*(\d[\d.,]*)"""),
-            Regex("""precio[:\s]+\$?\s*(\d[\d.,]*)"""),
-            Regex("""(\d{3,6})[,.]?(\d{2})?\s*(?:ars|pesos)?""")
+            Regex("""precio[:\s]+\$?\s*(\d[\d.,]*)""")
         )
         for (pattern in patterns)
         {
             val match = pattern.find(text) ?: continue
-            val raw = match.groupValues[1].replace(",", "").replace(".", "")
-            return raw.toDoubleOrNull()
+            val raw = match.groupValues[1].replace(".", "").replace(",", "")
+            val value = raw.toDoubleOrNull() ?: continue
+            if (value > 0) return value
         }
         return null
     }
@@ -84,18 +96,10 @@ class OcrProductScanner : ScannerDataSource
 
     private fun extractMetros(text: String): Double?
     {
-        val patterns = listOf(
-            Regex("""(\d+(?:[.,]\d+)?)\s*(?:m|metros)\s*(?:por\s*rollo|c/u|cada)?"""),
-            Regex("""(\d+(?:[.,]\d+)?)\s*m\b""")
-        )
-        for (pattern in patterns)
-        {
-            val match = pattern.find(text) ?: continue
-            val raw = match.groupValues[1].replace(",", ".")
-            val value = raw.toDoubleOrNull() ?: continue
-            if (value in 5.0..100.0) return value
-        }
-        return null
+        val pattern = Regex("""(\d+(?:[.,]\d+)?)\s*m\b""")
+        val match = pattern.find(text) ?: return null
+        val value = match.groupValues[1].replace(",", ".").toDoubleOrNull() ?: return null
+        return if (value in 5.0..100.0) value else null
     }
 
     private fun extractHojas(text: String): Int?
@@ -108,8 +112,8 @@ class OcrProductScanner : ScannerDataSource
     {
         return when
         {
-            "triple" in text || "3 capas" in text || "3 hojas" in text -> PlyType.TRIPLE
-            "doble" in text || "2 capas" in text || "2 hojas" in text -> PlyType.DOBLE
+            "triple" in text || "3 capas" in text -> PlyType.TRIPLE
+            "doble" in text || "2 capas" in text -> PlyType.DOBLE
             "simple" in text || "1 capa" in text -> PlyType.SIMPLE
             else -> null
         }
