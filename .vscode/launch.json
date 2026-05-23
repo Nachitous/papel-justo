@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Android: Build & Run",
+            "type": "node",
+            "request": "launch",
+            "preLaunchTask": "Android: Build & Run",
+            "program": "${workspaceFolder}/gradlew",
+            "console": "internalConsole",
+            "internalConsoleOptions": "neverOpen"
+        }
+    ]
+}
