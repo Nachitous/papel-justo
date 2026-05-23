@@ -1,5 +1,8 @@
 package com.papeljusto.app.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Product(
     val id: Long = 0,
     val marca: String,

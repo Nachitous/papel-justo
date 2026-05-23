@@ -1,18 +1,17 @@
 package com.papeljusto.app.ui.screens.addproduct
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.papeljusto.app.data.repository.ProductRepository
 import com.papeljusto.app.domain.calculator.PaperCalculator
 import com.papeljusto.app.domain.model.PlyType
 import com.papeljusto.app.domain.model.Product
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class AddProductUiState(
     val marca: String = "",
@@ -28,10 +27,7 @@ data class AddProductUiState(
     val error: String? = null
 )
 
-@HiltViewModel
-class AddProductViewModel @Inject constructor(
-    private val repository: ProductRepository
-) : ViewModel()
+class AddProductViewModel(private val repository: ProductRepository) : ViewModel()
 {
     private val _uiState = MutableStateFlow(AddProductUiState())
     val uiState: StateFlow<AddProductUiState> = _uiState.asStateFlow()
@@ -92,5 +88,12 @@ class AddProductViewModel @Inject constructor(
             repository.saveProduct(productConCosto)
             _uiState.update { it.copy(guardado = true) }
         }
+    }
+
+    class Factory(private val repository: ProductRepository) : ViewModelProvider.Factory
+    {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            AddProductViewModel(repository) as T
     }
 }

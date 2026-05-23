@@ -1,22 +1,18 @@
 package com.papeljusto.app.ui.screens.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -39,14 +35,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.papeljusto.app.ui.components.ProductCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    factory: HomeViewModel.Factory,
     onAgregarProducto: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = viewModel(factory = factory)
 )
 {
     val rankeados by viewModel.productosRankeados.collectAsState()
@@ -68,7 +65,7 @@ fun HomeScreen(
                         IconButton(onClick = { mostrarConfirmacionBorrar = true })
                         {
                             Icon(
-                                imageVector = Icons.Default.DeleteSweep,
+                                imageVector = Icons.Default.Delete,
                                 contentDescription = "Borrar todo"
                             )
                         }
@@ -94,7 +91,6 @@ fun HomeScreen(
         if (rankeados.isEmpty())
         {
             EstadoVacio(
-                onAgregar = onAgregarProducto,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
@@ -151,7 +147,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun EstadoVacio(onAgregar: () -> Unit, modifier: Modifier = Modifier)
+private fun EstadoVacio(modifier: Modifier = Modifier)
 {
     Box(modifier = modifier, contentAlignment = Alignment.Center)
     {

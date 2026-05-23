@@ -1,5 +1,8 @@
 package com.papeljusto.app.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class PlyType(val label: String, val factor: Double) {
     SIMPLE("Hoja simple", 1.0),
     DOBLE("Doble hoja", 1.8),

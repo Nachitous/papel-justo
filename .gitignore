@@ -1,12 +1,15 @@
 *.iml
 .gradle
 /local.properties
+local.properties
 /.idea
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
-local.properties
 *.jks
 *.keystore
+gradlew
+gradlew.bat
+gradle/wrapper/gradle-wrapper.jar

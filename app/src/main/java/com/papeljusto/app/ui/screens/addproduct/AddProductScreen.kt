@@ -17,10 +17,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -46,14 +45,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.papeljusto.app.domain.model.PlyType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductScreen(
+    factory: AddProductViewModel.Factory,
     onNavigateBack: () -> Unit,
-    viewModel: AddProductViewModel = hiltViewModel()
+    viewModel: AddProductViewModel = viewModel(factory = factory)
 )
 {
     val state by viewModel.uiState.collectAsState()
@@ -101,7 +101,7 @@ fun AddProductScreen(
             )
             {
                 Icon(
-                    imageVector = if (state.modoAvanzado) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    imageVector = if (state.modoAvanzado) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = null
                 )
                 Text(

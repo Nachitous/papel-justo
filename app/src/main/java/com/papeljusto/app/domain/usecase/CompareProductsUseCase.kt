@@ -3,9 +3,8 @@ package com.papeljusto.app.domain.usecase
 import com.papeljusto.app.domain.calculator.PaperCalculator
 import com.papeljusto.app.domain.model.Product
 import com.papeljusto.app.domain.model.ProductoRankeado
-import javax.inject.Inject
 
-class CompareProductsUseCase @Inject constructor()
+class CompareProductsUseCase
 {
     fun execute(productos: List<Product>): List<ProductoRankeado>
     {
